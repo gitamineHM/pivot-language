@@ -16,8 +16,8 @@ var Param = {
   // PIVOT :  ['en'] //langues pivots,
   API_PORT : 3000
  }
-//////////////////////// LOCAL REST SERVER /////////////////////////////
 
+//////////////////////// LOCAL REST SERVER /////////////////////////////
 
 app.use(cors())
 // app.use(morgan('dev'));
@@ -25,6 +25,8 @@ app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({
   extended: true
 }));
+
+/////////////////////////////Functions/////////////////////////////
 
 function Translate(toTranslate) // source,target,text
 {
@@ -42,7 +44,9 @@ function Translate(toTranslate) // source,target,text
 })
 })
 }
+
 //////////////////////API DEFINITION ///////////////////////////////////
+
 app.post('/translate', function(req, res) {
   b = req.body
   // console.log(b)
@@ -57,53 +61,52 @@ app.post('/translate', function(req, res) {
             // console.log(result) // Résultat de la Traduction Directe
             res.send(data.body)
         }
-  },function(data){
-  if (data.status == 500)
-  {
-  //Traduction impossible utilisation de la langue pivot
-  var toTranslate2 = JSON.parse(JSON.stringify(toTranslate));
-
-  toTranslate2.source = 'en'
-  toTranslate.target = 'en'
-  // console.log(toTranslate)
-  var promise2 = Translate(toTranslate)
-  var intermediate = ''
-
-  promise2.then(
-    function(data) {
-        if (data.status == 200)
-        {
-        intermediate = data.body.outputs[0]
-        return intermediate  }
-  },function(data){
-  if (data.status == 500)
-  {
-    console.log('erreur de traduction vers langue pivot')
-  }
-}).then(function(result){
-   toTranslate2.input = result.output
-   var promise3 = Translate(toTranslate2)
-   promise3.then(
-     function(data) {
-         if (data.status == 200)
-         {
-           // console.log(toTranslate)
-        var sourceLanguage = (toTranslate.source=='auto') ? result.detectedLanguage : toTranslate.source
-        result = '[' + sourceLanguage + '] ' + toTranslate.input + ' >>> [' + toTranslate2.target + '] ' + data.body.outputs[0].output
-        console.log(result) // Résultat de la Traduction inDirecte via Pivot
-         res.send(data.body)
-       }
-
    },function(data){
-   if (data.status == 500)
-   {
+        if (data.status == 500)
+        {
+            //Traduction impossible utilisation de la langue pivot
+            var toTranslate2 = JSON.parse(JSON.stringify(toTranslate));
 
-     console.log('erreur de traduction depuis la langue pivot')
-   }
-   })
+            toTranslate2.source = 'en'
+            toTranslate.target = 'en'
+            // console.log(toTranslate)
+            var promise2 = Translate(toTranslate)
+            var intermediate = ''
 
-})
-}
+            promise2.then(
+              function(data) {
+                  if (data.status == 200)
+                  {
+                      intermediate = data.body.outputs[0]
+                      return intermediate
+                  }
+              },function(data){
+              if (data.status == 500)
+              {
+                    console.log('erreur de traduction vers langue pivot')
+              }
+              }).then(function(result){
+                 toTranslate2.input = result.output
+                 var promise3 = Translate(toTranslate2)
+                 promise3.then(
+                   function(data) {
+                       if (data.status == 200)
+                       {
+                            var sourceLanguage = (toTranslate.source=='auto') ? result.detectedLanguage : toTranslate.source
+                            result = '[' + sourceLanguage + '] ' + toTranslate.input + ' >>> [' + toTranslate2.target + '] ' + data.body.outputs[0].output
+                            console.log(result) // Résultat de la Traduction inDirecte via Pivot
+                            res.send(data.body)
+
+                     }},function(data){
+                       if (data.status == 500)
+                       {
+
+                         console.log('erreur de traduction depuis la langue pivot')
+                       }
+                      })
+
+              })
+         }
 })
 })
 
